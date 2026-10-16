@@ -190,7 +190,7 @@
       ['البيان', 'القيمة'],
       ['اسم المعلمة', p.full_name || ''], ['المدرسة', p.school_name || ''], ['المادة', p.subject || ''],
       ['العام الدراسي', p.academic_year || ''], ['الفصل الدراسي', p.term || ''],
-      ['البريد الإلكتروني', (DB.user && DB.user.email) || ''],
+      ['البريد الإلكتروني', (DB.viewing ? DB.viewing.email : DB.user && DB.user.email) || ''],
       ['عدد الفصول', classes.length], ['عدد الطالبات', students.size],
       ['تاريخ التصدير', DB.today()],
     ], [22, 40]);

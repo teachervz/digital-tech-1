@@ -13,6 +13,9 @@ Every lesson of the first-secondary textbook **التقنية الرقمية ١-
 
 - **Login only, no self sign-up:** teachers log in with email and password. Accounts are created by the admin on `admin.html`. The login page has "نسيت كلمة المرور؟" (forgot password), which emails a reset link. If `js/config.js` still holds placeholders, the app runs in a local **demo mode** and keeps data in the browser only.
 - **Admin page (`admin.html`):** add teachers (name, school, email, temporary password), copy a ready-to-send welcome message with the login details, edit names, disable or re-enable accounts, and send password-reset links.
+  - Each teacher's row shows a summary of her data (classes, students, lessons taught, Plickers accuracy).
+  - **📊 عرض اللوحة (view dashboard)** opens that teacher's dashboard (`dashboard.html?teacher=<uid>`) in **read-only** mode, with a banner. Filters, Excel export and printing work; every edit control is disabled, the data layer refuses changes, and the security rules give the admin read access only.
+- **First login:** a teacher created by the admin must choose her own password before she can use the app.
 - **Lesson library:** each unit is a themed card containing its lessons. A class must be selected before a lesson starts, and lessons already taught to that class show ✔️.
 - **Slide player:**
   - A fixed 1600×900 stage scales to any screen at 16:9, with no scrollbars. Dense slides shrink their content automatically to fit.
@@ -304,6 +307,7 @@ Every lesson also includes:
   - `classes/{classId}`: the class with its students, their points and its lesson progress.
   - `plickers/{classId}__{lessonId}`: Plickers answers for one class in one lesson.
 - `staff/{uid}` lists the teachers the admin added, with `active: true/false`. Only the admin (an email listed in `isAdmin()`) can create or change these entries; a teacher can read only her own.
+- The admin can **read** (never write) every teacher's `teachers/{uid}` data, to view dashboards.
 - `firestore.rules` allows reading and writing `teachers/{uid}` only when `request.auth.uid` matches `{uid}` **and** the user is the admin or an active staff member. Every other path is refused.
 - The admin creates accounts through a second, separate Firebase app instance, so her own session stays signed in. Accounts can't be deleted from the browser: disable them on the admin page, then delete them in **Authentication → Users** if needed.
 - The Firebase web config in `js/config.js` is public by design. Never put a service-account key or Admin SDK credentials in the frontend.

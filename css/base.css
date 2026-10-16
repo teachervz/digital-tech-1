@@ -601,3 +601,7 @@ body.player::after { content: ''; position: fixed; inset: 0; background: var(--g
 .lesson-page-badge { font-size: 26px; color: var(--ink-2); }
 .s-head .s-chip { flex: none; white-space: nowrap; }
 .s-head .s-title { min-width: 0; }
+
+/* شريط عرض المسؤولة للوحة معلمة */
+.view-banner { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px clamp(16px, 4vw, 40px); background: #fff6e5; border-bottom: 1px solid #f3d08b; color: #7a4b00; font-weight: 600; }
+.main [disabled] { cursor: not-allowed; }

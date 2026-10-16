@@ -17,6 +17,9 @@
     ['plickers', '📊', 'بليكرز'],
     ['export', '📤', 'التصدير'],
   ];
+  // المسؤولة تعرض لوحة معلمة (للعرض فقط): لا استيراد ولا تعديل
+  const VIEW = DB.viewing;
+  if (VIEW) SECTIONS.splice(SECTIONS.findIndex(s => s[0] === 'import'), 1);
   const side = document.getElementById('side');
   const main = document.getElementById('main');
   const LESSONS_ALL = UI.lessonIndex();
@@ -25,6 +28,19 @@
   const state = { studentClass: '', search: '', progressClass: '', plkClass: '', importPreview: null };
 
   UI.mountStatusBadge(document.getElementById('badge'));
+  if (VIEW) {
+    const name = DB.getProfile().full_name || VIEW.full_name || VIEW.email;
+    document.title = `لوحة ${name} – عرض المسؤولة`;
+    document.querySelector('.dash').before(el(`<div class="view-banner">👁️ تعرضين لوحة المعلمة: <b>${esc(name)}</b> <span class="pill">للعرض فقط</span>
+      <span class="grow"></span><a class="btn sm" href="admin.html">→ العودة لإدارة المعلمات</a></div>`));
+    // تعطيل كل أدوات التعديل، مع إبقاء الفلاتر والتصدير والطباعة
+    const ALLOW = '#f-cls, #f-q, #pg-cls, #plk-cls, #x-all, #x-q, #x-p, #exp-q, #print, [data-a="students"]';
+    const lock = () => {
+      main.querySelectorAll('button, input, select, textarea').forEach(x => { if (!x.matches(ALLOW)) { x.disabled = true; x.title = 'للعرض فقط'; } });
+      main.querySelectorAll('a[href^="presentation.html"], a[href="#import"], a[href="#profile"]').forEach(a => { a.hidden = true; });
+    };
+    new MutationObserver(lock).observe(main, { childList: true, subtree: true });
+  }
   document.getElementById('logout').onclick = async () => { await DB.signOut(); location.href = 'index.html'; };
 
   side.innerHTML = SECTIONS.map(([id, ic, label]) => `<button data-s="${id}"><span class="ic">${ic}</span>${label}</button>`).join('');
@@ -107,8 +123,8 @@
       return { label: c.name, value: pct(n, LESSONS_ALL.length), tip: `${ar(n)} من ${ar(LESSONS_ALL.length)} درسًا`, color: c.color };
     });
 
-    main.innerHTML = title(`مرحبًا ${esc(p.full_name || 'معلمتنا')} 👋`) + `
-      ${!p.full_name || !p.school_name ? `<div class="card" style="border-inline-start:6px solid var(--warn)">✍️ أكملي <a href="#profile">ملفك الشخصي</a> ليظهر اسمك واسم مدرستك في شريحة الترحيب.</div>` : ''}
+    main.innerHTML = title(VIEW ? `لوحة ${esc(p.full_name || VIEW.full_name || '')} 📊` : `مرحبًا ${esc(p.full_name || 'معلمتنا')} 👋`) + `
+      ${!VIEW && (!p.full_name || !p.school_name) ? `<div class="card" style="border-inline-start:6px solid var(--warn)">✍️ أكملي <a href="#profile">ملفك الشخصي</a> ليظهر اسمك واسم مدرستك في شريحة الترحيب.</div>` : ''}
       <div class="stats">
         <div class="stat"><div class="k">🏫 الفصول</div><div class="v">${ar(classes.length)}</div></div>
         <div class="stat"><div class="k">👭 الطالبات</div><div class="v">${ar(students.length)}</div></div>

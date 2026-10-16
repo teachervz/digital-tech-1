@@ -3,6 +3,7 @@
 // • المسؤولة (بريدها في isAdmin) تضيف المعلمات وتفعّل حساباتهن أو توقفها.
 // • المعلمة لا تصل لأي بيانات إلا إذا أضافتها المسؤولة وحسابها مفعّل،
 //   وحتى عندها تقرأ وتكتب بياناتها هي فقط.
+// • المسؤولة تستطيع قراءة بيانات المعلمات (للعرض فقط) دون تعديلها.
 // طريقة التفعيل: Firebase console → Firestore Database → Rules → الصقي هذا الملف → Publish
 // ⚠️ اكتبي بريد المسؤولة بأحرف صغيرة، وبنفس البريد في js/config.js (ADMIN_EMAILS)
 // =====================================================================
@@ -34,10 +35,13 @@ service cloud.firestore {
     }
 
     // بيانات كل معلمة: الملف الشخصي + الفصول + نتائج بليكرز
+    // المعلمة تقرأ وتكتب بياناتها، والمسؤولة تقرأ فقط (لعرض لوحات المعلمات)
     match /teachers/{uid} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid) || isAdmin();
+      allow write: if isOwner(uid);
       match /{collection}/{docId} {
-        allow read, write: if isOwner(uid) && collection in ['classes', 'plickers'];
+        allow read: if (isOwner(uid) || isAdmin()) && collection in ['classes', 'plickers'];
+        allow write: if isOwner(uid) && collection in ['classes', 'plickers'];
       }
     }
 

@@ -48,6 +48,8 @@
 
   // ---------- الحالة ----------
   let user = null;            // { id, email }
+  let viewing = null;         // عند عرض المسؤولة للوحة معلمة: { uid, email, full_name } (للعرض فقط)
+  const dataId = () => (viewing ? viewing.uid : user.id);
   let store = emptyStore();   // نسخة البيانات المحلية بشكل جداول
   let pending = 0;            // عمليات حفظ لم يؤكدها الخادم بعد
   const listeners = new Set();
@@ -55,8 +57,8 @@
 
   function emptyStore() { const s = {}; TABLES.forEach(t => s[t] = []); return s; }
   const storeKey = () => `tq_store_v2_${user ? user.id : 'none'}`;
-  function persist() { ls.set(storeKey(), store); }
-  function loadLocal() { store = Object.assign(emptyStore(), ls.get(storeKey(), {})); }
+  function persist() { if (!viewing) ls.set(storeKey(), store); }
+  function loadLocal() { store = viewing ? emptyStore() : Object.assign(emptyStore(), ls.get(storeKey(), {})); }
 
   // ---------- حالة الاتصال ----------
   function status() {
@@ -190,6 +192,16 @@
       const access = await checkAccess(false);
       if (!access.ok) { await signOut(); location.href = back; return null; }
       if (access.mustChange) { location.href = 'index.html'; return null; }
+      // المسؤولة تعرض لوحة معلمة: dashboard.html?teacher=<uid> (قراءة فقط)
+      const tid = new URLSearchParams(location.search).get('teacher');
+      if (tid && isAdmin() && tid !== user.id) {
+        let st = {};
+        try { const snap = await fs.collection('staff').doc(tid).get(); st = snap.exists ? snap.data() : {}; } catch (e) { /* تجاهل */ }
+        viewing = { uid: tid, email: st.email || '', full_name: st.full_name || '' };
+        store = emptyStore();
+        await pullAll();
+        return u;
+      }
       // جهاز جديد بلا نسخة محلية: ننتظر البيانات (بحد أقصى ٨ ثوانٍ)، وإلا نحدّث في الخلفية
       if (!store.classes.length) await Promise.race([pullAll(), new Promise(r => setTimeout(r, 8000))]);
       else pullAll();
@@ -198,7 +210,7 @@
   }
 
   // ---------- مراجع Firestore ----------
-  const tDoc = () => fs.collection('teachers').doc(user.id);
+  const tDoc = () => fs.collection('teachers').doc(dataId());
   const classCol = () => tDoc().collection('classes');
   const plkCol = () => tDoc().collection('plickers');
   const plkId = (cid, lid) => `${cid}__${lid}`;
@@ -214,7 +226,7 @@
     try {
       const [tSnap, cSnap, pSnap] = await Promise.all([tDoc().get(), classCol().get(), plkCol().get()]);
       const fresh = emptyStore();
-      if (tSnap.exists) fresh.teachers.push(Object.assign({ id: user.id }, tSnap.data()));
+      if (tSnap.exists) fresh.teachers.push(Object.assign({ id: dataId() }, tSnap.data()));
       cSnap.forEach(d => {
         const c = d.data();
         fresh.classes.push({ id: d.id, name: c.name, grade: c.grade, color: c.color, created_at: c.created_at });
@@ -248,7 +260,7 @@
   }
   // مستند الفصل كاملًا (الفصل + الطالبات + النقاط + الدروس المنجزة)
   function syncClass(cid) {
-    if (MODE !== 'cloud') return;
+    if (MODE !== 'cloud' || viewing) return;
     const c = store.classes.find(x => x.id === cid);
     if (!c) { track(classCol().doc(cid).delete()); return; }
     const students = {};
@@ -266,7 +278,7 @@
   }
   // مستند إجابات بليكرز لفصل في درس
   function syncPlk(cid, lid) {
-    if (MODE !== 'cloud') return;
+    if (MODE !== 'cloud' || viewing) return;
     const rows = store.plickers_responses.filter(r => r.class_id === cid && r.lesson_id === lid);
     const ref = plkCol().doc(plkId(cid, lid));
     if (!rows.length) { track(ref.delete()); return; }
@@ -275,8 +287,8 @@
     track(ref.set({ class_id: cid, lesson_id: lid, answers }));
   }
   function syncProfile() {
-    if (MODE !== 'cloud') return;
-    const p = Object.assign({}, store.teachers.find(t => t.id === user.id));
+    if (MODE !== 'cloud' || viewing) return;
+    const p = Object.assign({}, store.teachers.find(t => t.id === dataId()));
     delete p.id;
     track(tDoc().set(p));
   }
@@ -284,6 +296,7 @@
 
   // ---------- الملف الشخصي ----------
   function getProfile() {
+    if (viewing) return store.teachers.find(t => t.id === viewing.uid) || { id: viewing.uid, full_name: viewing.full_name, school_name: '', subject: '', academic_year: '', term: '' };
     return (user && store.teachers.find(t => t.id === user.id)) || { id: user && user.id, full_name: '', school_name: '', subject: 'التقنية الرقمية ١-١', academic_year: '', term: '' };
   }
   function ensureProfile(staff) {
@@ -293,6 +306,7 @@
     persist(); syncProfile();
   }
   function saveProfile(patch) {
+    if (viewing) return getProfile();
     let row = store.teachers.find(t => t.id === user.id);
     if (!row) { row = { id: user.id, created_at: nowIso() }; store.teachers.push(row); }
     Object.assign(row, patch); persist(); syncProfile();
@@ -306,16 +320,20 @@
   }
   const getClass = id => store.classes.find(c => c.id === id) || null;
   function createClass({ name, color, grade }) {
+    // وضع عرض المسؤولة: قراءة فقط
+    if (viewing) return null;
     const row = { id: uuid(), name: name.trim(), color: color || '#7c5cff', grade: grade || 'أول ثانوي', created_at: nowIso() };
     store.classes.push(row); persist(); syncClass(row.id);
     return row;
   }
   function updateClass(id, patch) {
+    if (viewing) return null;
     const row = getClass(id); if (!row) return null;
     Object.assign(row, patch); persist(); syncClass(id);
     return row;
   }
   function deleteClass(id) {
+    if (viewing) return;
     const lessons = lessonsOf(id);
     store.classes = store.classes.filter(c => c.id !== id);
     store.students = store.students.filter(s => s.class_id !== id);
@@ -334,10 +352,12 @@
     return (used.length ? Math.max(...used) : 0) + 1;
   }
   function createStudent(row) {
+    if (viewing) return null;
     if (!row.plickers_card_number) row.plickers_card_number = nextCardNumber(row.class_id);
     return bulkInsertStudents([row])[0];
   }
   function bulkInsertStudents(rows) {
+    if (viewing) return [];
     // ترقيم بطاقات بليكرز تلقائيًا (١..ن لكل فصل) لمن لا تملك رقمًا
     const counters = {};
     const out = rows.map(r => {
@@ -353,6 +373,7 @@
     return out;
   }
   function updateStudent(id, patch) {
+    if (viewing) return null;
     const row = store.students.find(s => s.id === id); if (!row) return null;
     const oldClass = row.class_id;
     Object.assign(row, patch);
@@ -365,6 +386,7 @@
     return row;
   }
   function deleteStudent(id) {
+    if (viewing) return;
     const row = store.students.find(s => s.id === id); if (!row) return;
     const lessons = [...new Set(store.plickers_responses.filter(r => r.student_id === id).map(r => r.lesson_id))];
     store.students = store.students.filter(s => s.id !== id);
@@ -375,6 +397,7 @@
 
   // ---------- المشاركة (تُخزَّن كعدّاد لكل طالبة في كل درس) ----------
   function addParticipation({ student_id, class_id, lesson_id, type, value }) {
+    if (viewing) return null;
     const id = `${student_id}|${lesson_id}|${type}`;
     let row = store.participation.find(p => p.id === id);
     if (row) row.value += value == null ? 1 : value;
@@ -392,6 +415,7 @@
   }
   // answers: { student_id: 'A'|'B'|'C'|'D'|null }
   function savePlickersResponses({ class_id, lesson_id, question_id, correct, answers }) {
+    if (viewing) return 0;
     let n = 0;
     Object.entries(answers).forEach(([student_id, answer]) => {
       const id = `${class_id}|${lesson_id}|${question_id}|${student_id}`;
@@ -409,6 +433,7 @@
   function listProgress(classId) { return store.lesson_progress.filter(p => !classId || p.class_id === classId); }
   function isTaught(classId, lessonId) { return store.lesson_progress.some(p => p.class_id === classId && p.lesson_id === lessonId); }
   function markTaught(classId, lessonId, date, notes) {
+    if (viewing) return store.lesson_progress.find(p => p.class_id === classId && p.lesson_id === lessonId) || { taught_on: '' };
     const old = store.lesson_progress.find(p => p.class_id === classId && p.lesson_id === lessonId);
     const row = old ? Object.assign(old, { taught_on: date || old.taught_on || today(), notes: notes === undefined ? old.notes : notes })
       : { id: `${classId}|${lessonId}`, class_id: classId, lesson_id: lessonId, taught_on: date || today(), notes: notes || null };
@@ -417,6 +442,7 @@
     return row;
   }
   function unmarkTaught(classId, lessonId) {
+    if (viewing) return;
     store.lesson_progress = store.lesson_progress.filter(p => !(p.class_id === classId && p.lesson_id === lessonId));
     persist(); syncClass(classId);
   }
@@ -465,6 +491,19 @@
     finally { try { await a.signOut(); } catch (e) { /* تجاهل */ } }
     return { staff: Object.assign({ id: cred.user.uid }, row) };
   }
+  async function teacherSummary(uid) {
+    const t = fs.collection('teachers').doc(uid);
+    const [cSnap, pSnap] = await Promise.all([t.collection('classes').get(), t.collection('plickers').get()]);
+    let classes = 0, students = 0, taught = 0, points = 0, total = 0, correct = 0;
+    cSnap.forEach(d => {
+      const c = d.data(); classes++;
+      const st = Object.values(c.students || {}); students += st.length;
+      taught += Object.keys(c.progress || {}).length;
+      st.forEach(s => Object.values(s.part || {}).forEach(p => { points += p.point || 0; }));
+    });
+    pSnap.forEach(d => Object.values(d.data().answers || {}).forEach(q => Object.values(q).forEach(r => { total++; if (r.c) correct++; })));
+    return { classes, students, taught, points, plkTotal: total, plkPct: total ? Math.round(100 * correct / total) : null };
+  }
   async function updateStaff(uid, patch) {
     try { await fs.collection('staff').doc(uid).update(patch); return { ok: true }; }
     catch (e) { return { error: 'تعذّر الحفظ. تأكدي من الإنترنت.' }; }
@@ -473,7 +512,7 @@
   window.DB = {
     MODE, uuid, today, ls,
     getSession, signIn, signOut, resetPassword, requireAuth, get user() { return user; },
-    isAdmin, listStaff, createTeacher, updateStaff, changePassword, verifyAccess: () => checkAccess(false),
+    isAdmin, listStaff, createTeacher, updateStaff, teacherSummary, get viewing() { return viewing; }, changePassword, verifyAccess: () => checkAccess(false),
     onStatus, onData, status, pullAll, get pendingCount() { return pending; },
     getProfile, saveProfile,
     listClasses, getClass, createClass, updateClass, deleteClass,

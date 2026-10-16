@@ -20,6 +20,7 @@
   }
 
   let staff = [];
+  const summaries = {}; // uid → ملخص بيانات المعلمة (فصول، طالبات، دروس، بليكرز)
   let search = '';
   const EMAIL_RE = /^\S+@\S+\.\S+$/;
   // كلمة مرور مؤقتة سهلة القراءة (بلا أحرف متشابهة مثل l و 1 و O و 0)
@@ -50,6 +51,26 @@
       return;
     }
     render();
+    loadSummaries();
+  }
+
+  // ملخص بيانات كل معلمة (يُحمَّل بعد ظهور القائمة)
+  async function loadSummaries() {
+    await Promise.all(staff.map(async s => {
+      try { summaries[s.id] = await DB.teacherSummary(s.id); } catch (e) { summaries[s.id] = { error: true }; }
+    }));
+    if (!main.querySelector('#rows')) return;
+    rows();
+    const all = Object.values(summaries).filter(x => !x.error);
+    const tot = main.querySelector('#tot-students');
+    if (tot) tot.textContent = ar(all.reduce((a, x) => a + x.students, 0));
+  }
+  function summaryCell(s) {
+    const x = summaries[s.id];
+    if (!x) return '<span class="muted small">… جارٍ التحميل</span>';
+    if (x.error) return '<span class="muted small">تعذّر التحميل</span>';
+    if (!x.classes) return '<span class="muted small">لا توجد فصول بعد</span>';
+    return `<span class="small" style="white-space:nowrap">🏫 ${ar(x.classes)} فصول · 👭 ${ar(x.students)} طالبة<br>📚 ${ar(x.taught)} دروس منجزة · 📊 ${x.plkPct == null ? '—' : ar(x.plkPct) + '٪'} بليكرز</span>`;
   }
 
   function render() {
@@ -60,6 +81,7 @@
         <div class="stat"><div class="k">👩‍🏫 كل المعلمات</div><div class="v">${ar(staff.length)}</div></div>
         <div class="stat"><div class="k">✅ حسابات مفعّلة</div><div class="v">${ar(active)}</div></div>
         <div class="stat"><div class="k">⏸️ حسابات موقوفة</div><div class="v">${ar(staff.length - active)}</div></div>
+        <div class="stat"><div class="k">👭 كل الطالبات</div><div class="v" id="tot-students">…</div></div>
       </div>
 
       <form class="card" id="add" novalidate>
@@ -84,7 +106,7 @@
           <input class="input" id="q" placeholder="🔍 ابحثي بالاسم أو البريد…" value="${esc(search)}" style="max-width:280px">
         </div>
         <div class="table-wrap"><table class="tbl"><thead><tr>
-          <th>الاسم</th><th>البريد</th><th>المدرسة</th><th>الحالة</th><th>تاريخ الإضافة</th><th></th>
+          <th>المعلمة</th><th>المدرسة</th><th>بياناتها</th><th>الحالة</th><th></th>
         </tr></thead><tbody id="rows"></tbody></table></div>
         <p class="muted small" style="margin:12px 0 0">لحذف حساب نهائيًا: أوقفيه هنا، ثم احذفيه من Firebase console → Authentication → Users.</p>
       </div>`;
@@ -137,17 +159,18 @@
     const q = search.trim().toLowerCase();
     const list = staff.filter(s => !q || String(s.full_name || '').toLowerCase().includes(q) || String(s.email || '').includes(q));
     body.innerHTML = list.length ? list.map(s => `<tr>
-        <td><b>${esc(s.full_name || '')}</b></td>
-        <td class="ltr" style="text-align:right">${esc(s.email || '')}</td>
+        <td><b>${esc(s.full_name || '')}</b><div class="small muted ltr" style="text-align:right">${esc(s.email || '')}</div>
+          ${s.created_at ? `<div class="small muted">أُضيفت ${esc(fmtDate(s.created_at))}</div>` : ''}</td>
         <td>${esc(s.school_name || '')}</td>
-        <td>${s.active ? '<span class="pill good">مفعّل</span>' : '<span class="pill bad">موقوف</span>'}${s.active && s.must_change_password ? ' <span class="pill warn" title="ما زالت تستخدم كلمة المرور المؤقتة">لم تدخل بعد</span>' : ''}</td>
-        <td class="small">${s.created_at ? esc(fmtDate(s.created_at)) : ''}</td>
+        <td>${summaryCell(s)}</td>
+        <td>${s.active ? '<span class="pill good">مفعّل</span>' : '<span class="pill bad">موقوف</span>'}${s.active && s.must_change_password ? '<br><span class="pill warn" title="ما زالت تستخدم كلمة المرور المؤقتة">لم تدخل بعد</span>' : ''}</td>
         <td style="white-space:nowrap">
-          <button class="btn sm" data-a="edit" data-id="${s.id}">✏️ تعديل</button>
-          <button class="btn sm" data-a="reset" data-id="${s.id}" title="إرسال رابط تعيين كلمة مرور جديدة">🔑 رابط كلمة المرور</button>
-          <button class="btn sm ${s.active ? 'ghost' : 'primary'}" data-a="toggle" data-id="${s.id}">${s.active ? '⏸️ إيقاف' : '▶ تفعيل'}</button>
+          <a class="btn sm primary" href="dashboard.html?teacher=${encodeURIComponent(s.id)}">📊 عرض اللوحة</a>
+          <button class="btn sm" data-a="edit" data-id="${s.id}" title="تعديل الاسم والمدرسة">✏️</button>
+          <button class="btn sm" data-a="reset" data-id="${s.id}" title="إرسال رابط تعيين كلمة مرور جديدة">🔑</button>
+          <button class="btn sm ${s.active ? 'ghost' : ''}" data-a="toggle" data-id="${s.id}">${s.active ? '⏸️ إيقاف' : '▶ تفعيل'}</button>
         </td></tr>`).join('')
-      : `<tr><td colspan="6" class="muted" style="text-align:center;padding:24px">${staff.length ? 'لا توجد نتائج مطابقة.' : 'لم تُضف أي معلمة بعد.'}</td></tr>`;
+      : `<tr><td colspan="5" class="muted" style="text-align:center;padding:24px">${staff.length ? 'لا توجد نتائج مطابقة.' : 'لم تُضف أي معلمة بعد.'}</td></tr>`;
     body.querySelectorAll('[data-a]').forEach(b => b.onclick = () => act(b.dataset.a, staff.find(s => s.id === b.dataset.id)));
   }
 
