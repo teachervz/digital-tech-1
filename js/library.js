@@ -187,7 +187,7 @@
             ${classes.length ? `<select class="input" id="cls">
               <option value="">— اختاري الفصل —</option>
               ${classes.map(c => `<option value="${c.id}" ${c.id === classId ? 'selected' : ''}>${esc(c.name)} (${ar(c.student_count)} طالبة)</option>`).join('')}
-            </select>` : `<a class="btn sm primary" href="dashboard.html#classes">➕ أضيفي فصولك أولًا</a>`}
+            </select>` : `<span class="muted small">يمكنك عرض الدروس الآن، وأضيفي فصولك لاحقًا لتفعيل القرعة وبليكرز</span><a class="btn sm" href="dashboard.html#classes">➕ إضافة فصل</a>`}
           </div>
         </section>
         <div id="units"></div>
@@ -231,26 +231,22 @@
 
     async function start(lessonId) {
       let cid = classId;
-      if (!cid) {
-        if (!classes.length) {
-          const go = await modal({
-            title: 'اختيار الفصل',
-            body: '<p>القرعة والنقاط ونتائج بليكرز مرتبطة بفصل محدد، لذا أضيفي فصولك وطالباتك أولًا من لوحة المعلمة.</p>',
-            actions: [{ label: 'الذهاب إلى لوحة المعلمة', kind: 'primary', value: true }, { label: 'إلغاء', value: false }],
-          });
-          if (go) location.href = 'dashboard.html#classes';
-          return;
-        }
+      // لا توجد فصول بعد: يُفتح الدرس مباشرة (القرعة والنقاط وبليكرز تعمل بعد إضافة الفصول)
+      if (!cid && classes.length) {
         cid = await modal({
           title: 'اختاري الفصل قبل بدء الدرس',
           body: `<div class="field"><label for="m-cls">الفصل</label><select class="input" id="m-cls">
-            ${classes.map(c => `<option value="${c.id}">${esc(c.name)} (${ar(c.student_count)} طالبة)</option>`).join('')}</select></div>`,
-          actions: [{ label: 'ابدئي العرض ▶', kind: 'primary', value: m => m.querySelector('#m-cls').value }, { label: 'إلغاء', value: null }],
+            ${classes.map(c => `<option value="${c.id}">${esc(c.name)} (${ar(c.student_count)} طالبة)</option>`).join('')}</select></div>
+            <p class="muted small">القرعة والنقاط ونتائج بليكرز تُحفظ لهذا الفصل.</p>`,
+          actions: [
+            { label: 'ابدئي العرض ▶', kind: 'primary', value: m => m.querySelector('#m-cls').value },
+            { label: 'عرض بدون فصل', value: '' },
+            { label: 'إلغاء', value: null }],
         });
-        if (!cid) return;
-        classId = cid; DB.ls.set(classKey(), cid);
+        if (cid === null) return;
+        if (cid) { classId = cid; DB.ls.set(classKey(), cid); }
       }
-      location.href = `presentation.html?lesson=${encodeURIComponent(lessonId)}&class=${encodeURIComponent(cid)}`;
+      location.href = `presentation.html?lesson=${encodeURIComponent(lessonId)}` + (cid ? `&class=${encodeURIComponent(cid)}` : '');
     }
   }
 

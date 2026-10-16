@@ -24,7 +24,9 @@
   document.title = `${lesson.title} – ${unit.title}`;
   UI.mountStatusBadge(document.getElementById('badge'));
   const pclass = document.getElementById('pclass');
-  if (cls) { pclass.hidden = false; pclass.textContent = '👭 ' + cls.name; }
+  pclass.hidden = false;
+  pclass.textContent = cls ? '👭 ' + cls.name : '👁️ عرض بدون فصل';
+  if (!cls) pclass.title = 'القرعة وبليكرز تحتاج اختيار فصل من المكتبة';
 
   // كل درس يبدأ بغلاف الوحدة السينمائي
   const slides = [{ type: 'cover' }].concat(lesson.slides);
@@ -308,7 +310,7 @@
   let drawEl = null, spinning = false, picked = null;
   const drawKey = () => 'tq_drawn_' + classId;
   function openDraw() {
-    if (!cls) { toast('اختاري فصلًا من المكتبة أولًا لاستخدام القرعة', 'err'); return; }
+    if (!cls) { toast('القرعة تحتاج فصلًا: أضيفي فصولك من لوحة المعلمة ثم اختاريه في المكتبة', 'err'); return; }
     if (!DB.listStudents(classId).length) { toast('لا توجد طالبات في هذا الفصل بعد – أضيفيهن من لوحة المعلمة', 'err'); return; }
     if (!drawEl) {
       drawEl = el(`<div class="draw-back"><div class="draw-box">

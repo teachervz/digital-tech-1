@@ -25,7 +25,7 @@
   // open({ classId, lessonId, q: شريحة بليكرز, results: true لعرض النتائج مباشرة, onSaved })
   function open({ classId, lessonId, q, results, onSaved }) {
     const cls = classId && DB.getClass(classId);
-    if (!cls) { toast('اختاري فصلًا من المكتبة أولًا لتسجيل نتائج بليكرز', 'err'); return; }
+    if (!cls) { toast('تسجيل نتائج بليكرز يحتاج فصلًا: أضيفي فصولك من لوحة المعلمة ثم اختاريه في المكتبة', 'err'); return; }
     const students = DB.listStudents(classId);
     if (!students.length) { toast('لا توجد طالبات في هذا الفصل بعد', 'err'); return; }
     close();

@@ -2,6 +2,7 @@
 
 > **Change (2026-10-16):** the database was switched from **Supabase to Firebase (Cloud Firestore)**, because the Supabase account had no free project slot left. Wherever this brief says Supabase, read Firebase. `supabase/schema.sql` and `seed.sql` are replaced by `firestore.rules`, and `js/supabase.js` by `js/db.js`. Setup steps are in project-overview.md.
 > **Change (2026-10-16):** public sign-up was removed. Teacher accounts are created by an admin on `admin.html`, and the login page has login plus "forgot password" only. Firestore rules block any account the admin hasn't added.
+> **Change (2026-10-16):** teachers can open any lesson without adding classes ("عرض بدون فصل"). A class is only needed for the name draw, points and Plickers recording.
 
 ## 0. CRITICAL LANGUAGE RULE
 > **Status:** ✅ **DONE** – All UI, slides, messages and Excel headers are Arabic; every page is `dir="rtl" lang="ar"`; code comments are Arabic.

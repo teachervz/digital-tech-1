@@ -16,7 +16,7 @@ Every lesson of the first-secondary textbook **التقنية الرقمية ١-
   - Each teacher's row shows a summary of her data (classes, students, lessons taught, Plickers accuracy).
   - **📊 عرض اللوحة (view dashboard)** opens that teacher's dashboard (`dashboard.html?teacher=<uid>`) in **read-only** mode, with a banner. Filters, Excel export and printing work; every edit control is disabled, the data layer refuses changes, and the security rules give the admin read access only.
 - **First login:** a teacher created by the admin must choose her own password before she can use the app.
-- **Lesson library:** each unit is a themed card containing its lessons. A class must be selected before a lesson starts, and lessons already taught to that class show ✔️.
+- **Lesson library:** each unit is a themed card containing its lessons. Lessons can be opened with or without a class. With a class selected, the name draw, points and Plickers results are saved for that class, and lessons already taught show ✔️. Without a class ("عرض بدون فصل", viewing without a class), the slides work fully, but the name draw and Plickers recording ask the teacher to add a class first.
 - **Slide player:**
   - A fixed 1600×900 stage scales to any screen at 16:9, with no scrollbars. Dense slides shrink their content automatically to fit.
   - Each lesson opens with a cinematic unit cover.
