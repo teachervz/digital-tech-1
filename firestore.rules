@@ -27,6 +27,10 @@ service cloud.firestore {
     match /staff/{uid} {
       allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
       allow create, update, delete: if isAdmin();
+      // المعلمة تستطيع فقط إلغاء علامة "يجب تغيير كلمة المرور" عن حسابها بعد تغييرها
+      allow update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['must_change_password', 'password_changed_at'])
+        && request.resource.data.must_change_password == false;
     }
 
     // بيانات كل معلمة: الملف الشخصي + الفصول + نتائج بليكرز

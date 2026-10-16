@@ -119,7 +119,7 @@
   // بيانات الدخول لإرسالها للمعلمة
   function showCredentials(s, password) {
     const link = location.href.replace(/admin\.html.*$/, 'index.html');
-    const text = `أهلًا ${s.full_name} 🌷\nتم إنشاء حسابك في منصة التقنية الرقمية ١-١.\nرابط الدخول: ${link}\nالبريد: ${s.email}\nكلمة المرور المؤقتة: ${password}\nيمكنك تغييرها من «نسيت كلمة المرور؟» في صفحة الدخول.`;
+    const text = `أهلًا ${s.full_name} 🌷\nتم إنشاء حسابك في منصة التقنية الرقمية-١.\nرابط الدخول: ${link}\nالبريد: ${s.email}\nكلمة المرور المؤقتة: ${password}\nعند أول دخول ستختارين كلمة مرور خاصة بكِ.`;
     const box = main.querySelector('#a-done');
     box.innerHTML = `<div class="card" style="background:var(--good-bg);box-shadow:none;margin:16px 0 0">
       <b>✅ تم إنشاء حساب ${esc(s.full_name)}</b>
@@ -140,7 +140,7 @@
         <td><b>${esc(s.full_name || '')}</b></td>
         <td class="ltr" style="text-align:right">${esc(s.email || '')}</td>
         <td>${esc(s.school_name || '')}</td>
-        <td>${s.active ? '<span class="pill good">مفعّل</span>' : '<span class="pill bad">موقوف</span>'}</td>
+        <td>${s.active ? '<span class="pill good">مفعّل</span>' : '<span class="pill bad">موقوف</span>'}${s.active && s.must_change_password ? ' <span class="pill warn" title="ما زالت تستخدم كلمة المرور المؤقتة">لم تدخل بعد</span>' : ''}</td>
         <td class="small">${s.created_at ? esc(fmtDate(s.created_at)) : ''}</td>
         <td style="white-space:nowrap">
           <button class="btn sm" data-a="edit" data-id="${s.id}">✏️ تعديل</button>

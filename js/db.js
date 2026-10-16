@@ -105,7 +105,7 @@
       loadLocal();
       await pullAll();
       ensureProfile(access.staff);
-      return { user };
+      return { user, mustChange: !!access.mustChange };
     } catch (e) { return { error: translateAuthError(e) }; }
   }
 
@@ -114,6 +114,26 @@
     if (MODE === 'demo') return { error: 'غير متاح في الوضع التجريبي.' };
     try { auth.languageCode = 'ar'; await auth.sendPasswordResetEmail(email); return { ok: true }; }
     catch (e) { return { error: translateAuthError(e) }; }
+  }
+
+  // ---------- تغيير كلمة المرور المؤقتة عند أول دخول ----------
+  async function changePassword(newPassword) {
+    if (MODE !== 'cloud') return { ok: true };
+    try { await auth.currentUser.updatePassword(newPassword); }
+    catch (e) {
+      if (/requires-recent-login/.test(e.code || '')) return { error: 'لأمان حسابك سجّلي الدخول مرة أخرى بكلمة المرور المؤقتة ثم غيّريها.', relogin: true };
+      return { error: translateAuthError(e) };
+    }
+    // كلمة المرور تغيّرت فعلًا؛ نحفظ ذلك محليًا ثم نحدّث العلامة في الخادم
+    ls.set(pwKey(), true);
+    ls.set(staffKey(), { ok: true, mustChange: false });
+    await clearMustChange();
+    return { ok: true };
+  }
+  const pwKey = () => 'tq_pwchanged_' + (user ? user.id : '');
+  async function clearMustChange() {
+    try { await fs.collection('staff').doc(user.id).update({ must_change_password: false, password_changed_at: nowIso() }); ls.del(pwKey()); return true; }
+    catch (e) { console.warn('تعذّر تحديث علامة تغيير كلمة المرور (تأكدي من نشر firestore.rules):', e && e.code || ''); return false; }
   }
 
   // ---------- صلاحية الدخول: المسؤولة، أو معلمة أضافتها المسؤولة وحسابها مفعّل ----------
@@ -126,10 +146,14 @@
       const snap = await fs.collection('staff').doc(user.id).get();
       const staff = snap.exists ? snap.data() : null;
       const ok = !!(staff && staff.active);
-      ls.set(staffKey(), ok);
-      return ok ? { ok, staff } : { ok, error: staff ? 'تم إيقاف حسابك. تواصلي مع مسؤولة النظام.' : 'هذا الحساب غير مسجّل من قِبل مسؤولة النظام.' };
+      let mustChange = !!(ok && staff.must_change_password);
+      // غيّرت كلمة المرور على هذا الجهاز لكن العلامة لم تُحدَّث في الخادم بعد: نسمح بالدخول ونعيد المحاولة
+      if (mustChange && ls.get(pwKey(), false)) { mustChange = false; clearMustChange(); }
+      ls.set(staffKey(), { ok, mustChange });
+      return ok ? { ok, staff, mustChange } : { ok, error: staff ? 'تم إيقاف حسابك. تواصلي مع مسؤولة النظام.' : 'هذا الحساب غير مسجّل من قِبل مسؤولة النظام.' };
     } catch (e) {
-      if (!strict && ls.get(staffKey(), false)) return { ok: true, staff: null };
+      const c = ls.get(staffKey(), null);
+      if (!strict && c && c.ok) return { ok: true, staff: null, mustChange: !!c.mustChange };
       return { ok: false, error: 'تعذّر التحقق من الحساب. تأكدي من الإنترنت ثم حاولي مرة أخرى.' };
     }
   }
@@ -165,6 +189,7 @@
     if (MODE === 'cloud') {
       const access = await checkAccess(false);
       if (!access.ok) { await signOut(); location.href = back; return null; }
+      if (access.mustChange) { location.href = 'index.html'; return null; }
       // جهاز جديد بلا نسخة محلية: ننتظر البيانات (بحد أقصى ٨ ثوانٍ)، وإلا نحدّث في الخلفية
       if (!store.classes.length) await Promise.race([pullAll(), new Promise(r => setTimeout(r, 8000))]);
       else pullAll();
@@ -434,7 +459,7 @@
     let cred;
     try { cred = await a.createUserWithEmailAndPassword(email, password); }
     catch (e) { return { error: translateAuthError(e) }; }
-    const row = { full_name, email: email.toLowerCase(), school_name: school_name || '', active: true, created_at: nowIso(), created_by: user.email };
+    const row = { full_name, email: email.toLowerCase(), school_name: school_name || '', active: true, must_change_password: true, created_at: nowIso(), created_by: user.email };
     try { await fs.collection('staff').doc(cred.user.uid).set(row); }
     catch (e) { return { error: 'أُنشئ الحساب لكن تعذّر تفعيله. تأكدي من نشر firestore.rules ومن بريد المسؤولة فيها.' }; }
     finally { try { await a.signOut(); } catch (e) { /* تجاهل */ } }
@@ -448,7 +473,7 @@
   window.DB = {
     MODE, uuid, today, ls,
     getSession, signIn, signOut, resetPassword, requireAuth, get user() { return user; },
-    isAdmin, listStaff, createTeacher, updateStaff,
+    isAdmin, listStaff, createTeacher, updateStaff, changePassword, verifyAccess: () => checkAccess(false),
     onStatus, onData, status, pullAll, get pendingCount() { return pending; },
     getProfile, saveProfile,
     listClasses, getClass, createClass, updateClass, deleteClass,
