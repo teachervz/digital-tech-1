@@ -1,0 +1,45 @@
+// =====================================================================
+// قواعد حماية Firestore
+// • المسؤولة (بريدها في isAdmin) تضيف المعلمات وتفعّل حساباتهن أو توقفها.
+// • المعلمة لا تصل لأي بيانات إلا إذا أضافتها المسؤولة وحسابها مفعّل،
+//   وحتى عندها تقرأ وتكتب بياناتها هي فقط.
+// طريقة التفعيل: Firebase console → Firestore Database → Rules → الصقي هذا الملف → Publish
+// ⚠️ اكتبي بريد المسؤولة بأحرف صغيرة، وبنفس البريد في js/config.js (ADMIN_EMAILS)
+// =====================================================================
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn() && request.auth.token.email != null
+        && request.auth.token.email.lower() in ['albeshrirehab@gmail.com'];
+    }
+    function isActiveStaff() {
+      let ref = /databases/$(database)/documents/staff/$(request.auth.uid);
+      return exists(ref) && get(ref).data.active == true;
+    }
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid && (isAdmin() || isActiveStaff());
+    }
+
+    // قائمة المعلمات المسموح لهن (تديرها المسؤولة)
+    match /staff/{uid} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow create, update, delete: if isAdmin();
+    }
+
+    // بيانات كل معلمة: الملف الشخصي + الفصول + نتائج بليكرز
+    match /teachers/{uid} {
+      allow read, write: if isOwner(uid);
+      match /{collection}/{docId} {
+        allow read, write: if isOwner(uid) && collection in ['classes', 'plickers'];
+      }
+    }
+
+    // أي مسار آخر ممنوع
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

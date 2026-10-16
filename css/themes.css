@@ -1,0 +1,128 @@
+/* =====================================================================
+   هوية كل وحدة: نفس الهيكل، "جلد" مختلف
+   لتغيير ألوان وحدة: عدّلي القيم داخل [data-theme="unit-x"]
+   ===================================================================== */
+
+/* ---------- الوحدة ١: أساسيات علم أجهزة الحاسب ----------
+   لوحة دارات إلكترونية + أرقام ثنائية | كحلي عميق + سماوي كهربائي + كهرماني | انتقال انزلاقي */
+[data-theme="unit-1"] {
+  --bg: #0a1230;
+  --surface: rgba(20, 34, 82, .72);
+  --surface-solid: #142252;
+  --chip-bg: rgba(56, 189, 248, .12);
+  --ink: #eef4ff;
+  --ink-2: #a9b8de;
+  --ink-3: #6f80ad;
+  --line: rgba(125, 170, 255, .22);
+  --accent: #38bdf8;
+  --accent-2: #fbbf24;
+  --accent-ink: #04122b;
+  --accent-shadow: rgba(56, 189, 248, .35);
+  --good: #34d399;
+  --bad: #fb7185;
+  --card-shadow: 0 20px 50px rgba(0, 0, 0, .35);
+  --title-deco: linear-gradient(90deg, #fbbf24, #38bdf8);
+  --title-grad: linear-gradient(135deg, #ffffff 20%, #7dd3fc 60%, #fbbf24);
+  --bar-bg: rgba(6, 12, 34, .82);
+  --bar-ink: #e6eeff;
+  --enter-anim: slideInL;
+  --enter-back: slideInR;
+  --glow: radial-gradient(900px 600px at 90% 0%, rgba(56, 189, 248, .22), transparent 60%), radial-gradient(700px 500px at 0% 100%, rgba(251, 191, 36, .12), transparent 60%);
+  --pattern:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Cg fill='none' stroke='%2338bdf8' stroke-opacity='.16' stroke-width='2'%3E%3Cpath d='M0 40h60l20 20h60l20-20h60'/%3E%3Cpath d='M40 0v50l20 20v60l-20 20v70'/%3E%3Cpath d='M150 220v-60l20-20h50'/%3E%3Cpath d='M100 110h40l20 20'/%3E%3C/g%3E%3Cg fill='%2338bdf8' fill-opacity='.35'%3E%3Ccircle cx='60' cy='40' r='4'/%3E%3Ccircle cx='160' cy='40' r='4'/%3E%3Ccircle cx='40' cy='50' r='4'/%3E%3Ccircle cx='150' cy='160' r='4'/%3E%3Ccircle cx='100' cy='110' r='4'/%3E%3C/g%3E%3Cg fill='%23fbbf24' fill-opacity='.18' font-family='monospace' font-size='14'%3E%3Ctext x='110' y='80'%3E0101%3C/text%3E%3Ctext x='20' y='190'%3E1100%3C/text%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(160deg, #0a1230, #101d4a 55%, #0a1230);
+}
+
+/* ---------- الوحدة ٢: العمل عبر الإنترنت ----------
+   سحب ونقاط اتصال متعاونة | سماء فاتحة + بنفسجي + وردي | انتقال صعود ناعم */
+[data-theme="unit-2"] {
+  --bg: #eef1ff;
+  --surface: rgba(255, 255, 255, .78);
+  --surface-solid: #ffffff;
+  --chip-bg: rgba(99, 102, 241, .09);
+  --ink: #1e1b4b;
+  --ink-2: #545386;
+  --ink-3: #8b8bb8;
+  --line: rgba(99, 102, 241, .18);
+  --accent: #6366f1;
+  --accent-2: #ec4899;
+  --accent-ink: #ffffff;
+  --accent-shadow: rgba(99, 102, 241, .3);
+  --good: #059669;
+  --bad: #e11d48;
+  --card-shadow: 0 18px 44px rgba(79, 70, 229, .14);
+  --title-deco: linear-gradient(90deg, #6366f1, #ec4899);
+  --title-grad: linear-gradient(135deg, #4338ca, #7c3aed 50%, #ec4899);
+  --bar-bg: rgba(30, 27, 75, .85);
+  --bar-ink: #ffffff;
+  --enter-anim: riseIn;
+  --enter-back: dropIn;
+  --glow: radial-gradient(900px 500px at 100% 0%, rgba(236, 72, 153, .14), transparent 60%), radial-gradient(800px 600px at 0% 100%, rgba(99, 102, 241, .18), transparent 60%);
+  --pattern:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='200' viewBox='0 0 260 200'%3E%3Cg fill='%23ffffff' fill-opacity='.85'%3E%3Cpath d='M40 70a22 22 0 0 1 40-12a18 18 0 0 1 30 14a14 14 0 0 1-4 28H44a16 16 0 0 1-4-30z'/%3E%3C/g%3E%3Cg fill='none' stroke='%236366f1' stroke-opacity='.18' stroke-width='2' stroke-dasharray='4 6'%3E%3Cpath d='M170 40L220 90L180 150L120 160'/%3E%3C/g%3E%3Cg fill='%236366f1' fill-opacity='.25'%3E%3Ccircle cx='170' cy='40' r='6'/%3E%3Ccircle cx='220' cy='90' r='6'/%3E%3Ccircle cx='180' cy='150' r='6'/%3E%3Ccircle cx='120' cy='160' r='6'/%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(170deg, #f4f2ff, #e6ecff 60%, #fdeef6);
+}
+
+/* ---------- الوحدة ٣: التقنية والحياة ----------
+   خلايا سداسية وشبكة عصبية وأوراق | زمردي + ليموني + فيروزي | انتقال تكبير */
+[data-theme="unit-3"] {
+  --bg: #04211d;
+  --surface: rgba(10, 58, 50, .7);
+  --surface-solid: #0c3a33;
+  --chip-bg: rgba(52, 211, 153, .12);
+  --ink: #ecfdf5;
+  --ink-2: #a7d8c6;
+  --ink-3: #6aa391;
+  --line: rgba(110, 231, 183, .22);
+  --accent: #34d399;
+  --accent-2: #bef264;
+  --accent-ink: #022c22;
+  --accent-shadow: rgba(52, 211, 153, .32);
+  --good: #a3e635;
+  --bad: #fb7185;
+  --card-shadow: 0 20px 50px rgba(0, 0, 0, .3);
+  --title-deco: linear-gradient(90deg, #bef264, #34d399, #22d3ee);
+  --title-grad: linear-gradient(135deg, #ecfdf5 10%, #6ee7b7 50%, #bef264);
+  --bar-bg: rgba(2, 24, 20, .85);
+  --bar-ink: #ecfdf5;
+  --enter-anim: zoomIn;
+  --enter-back: zoomOut;
+  --glow: radial-gradient(900px 600px at 0% 0%, rgba(34, 211, 238, .16), transparent 60%), radial-gradient(800px 600px at 100% 100%, rgba(190, 242, 100, .12), transparent 60%);
+  --pattern:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='168' height='194' viewBox='0 0 168 194'%3E%3Cg fill='none' stroke='%2334d399' stroke-opacity='.14' stroke-width='2'%3E%3Cpath d='M84 2l80 46v92l-80 46l-80-46V48z'/%3E%3Cpath d='M84 50l38 22v44l-38 22l-38-22V72z'/%3E%3C/g%3E%3Cg fill='%23bef264' fill-opacity='.3'%3E%3Ccircle cx='84' cy='2' r='4'/%3E%3Ccircle cx='164' cy='140' r='4'/%3E%3Ccircle cx='4' cy='140' r='4'/%3E%3Ccircle cx='84' cy='94' r='5'/%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(150deg, #04211d, #073b33 55%, #04211d);
+}
+
+/* ---------- الوحدة ٤: البرمجة بلغة HTML ----------
+   أقواس الشيفرة </> ومحرر نصوص داكن نيون | أسود بنفسجي + وردي نيون + أخضر | انتقال انزلاق عمودي */
+[data-theme="unit-4"] {
+  --bg: #0d0a1a;
+  --surface: rgba(32, 22, 58, .78);
+  --surface-solid: #1d1536;
+  --chip-bg: rgba(255, 79, 216, .12);
+  --ink: #f6f0ff;
+  --ink-2: #bfb2e0;
+  --ink-3: #7f74a6;
+  --line: rgba(255, 79, 216, .22);
+  --accent: #ff4fd8;
+  --accent-2: #4ade80;
+  --accent-ink: #1a0418;
+  --accent-shadow: rgba(255, 79, 216, .35);
+  --good: #4ade80;
+  --bad: #fb7185;
+  --card-shadow: 0 20px 50px rgba(0, 0, 0, .4);
+  --title-deco: linear-gradient(90deg, #4ade80, #ff4fd8);
+  --title-grad: linear-gradient(135deg, #ffffff 15%, #ff8be8 55%, #4ade80);
+  --bar-bg: rgba(10, 6, 22, .85);
+  --bar-ink: #f6f0ff;
+  --enter-anim: riseIn;
+  --enter-back: dropIn;
+  --glow: radial-gradient(900px 600px at 100% 0%, rgba(255, 79, 216, .2), transparent 60%), radial-gradient(800px 600px at 0% 100%, rgba(74, 222, 128, .12), transparent 60%);
+  --pattern:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='200' viewBox='0 0 240 200'%3E%3Cg font-family='monospace' font-weight='700' fill-opacity='.13'%3E%3Ctext x='14' y='50' font-size='34' fill='%23ff4fd8'%3E%26lt;/%26gt;%3C/text%3E%3Ctext x='130' y='120' font-size='26' fill='%234ade80'%3E{ }%3C/text%3E%3Ctext x='40' y='175' font-size='20' fill='%23ff4fd8'%3E%26lt;p%26gt;%3C/text%3E%3Ctext x='150' y='40' font-size='18' fill='%234ade80'%3E%26lt;h1%26gt;%3C/text%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(160deg, #0d0a1a, #1a1033 55%, #0d0a1a);
+}
+
+/* بطاقات الوحدات في المكتبة تأخذ نفس الثيم، مع حواف أنعم */
+.unit-card[data-theme] .lesson-card { background: var(--surface); }
+.unit-card[data-theme="unit-2"] { color: var(--ink); }
